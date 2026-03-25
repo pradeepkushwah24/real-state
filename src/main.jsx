@@ -1,9 +1,21 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
-import './styles/globalStyles'   // ✅ सही path और file name
+import { Provider } from 'react-redux'
+import { HelmetProvider } from 'react-helmet-async'
+import { ToastContainer } from 'react-toastify'
+import App from './App'
+import { store } from './redux/store'
+import 'bootstrap/dist/css/bootstrap.min.css'
+import 'react-toastify/dist/ReactToastify.css'
+import './styles/global.css'
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <Provider store={store}>
+      <HelmetProvider>
+        <App />
+        <ToastContainer position="top-right" autoClose={3000} />
+      </HelmetProvider>
+    </Provider>
   </React.StrictMode>,
 )

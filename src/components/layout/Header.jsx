@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { FaHome, FaBuilding, FaTag, FaUser, FaBars, FaTimes, FaHeart, FaBell } from 'react-icons/fa';
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const location = useLocation();
 
-  // Scroll effect
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -15,401 +16,462 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const styles = {
-    header: {
-      background: isScrolled ? 'rgba(255,255,255,0.98)' : '#ffffff',
-      boxShadow: isScrolled ? '0 4px 20px rgba(0,0,0,0.1)' : '0 2px 10px rgba(0,0,0,0.05)',
-      position: 'sticky',
-      top: 0,
-      zIndex: 1000,
-      transition: 'all 0.3s ease',
-      backdropFilter: isScrolled ? 'blur(10px)' : 'none',
-      borderBottom: '1px solid rgba(249,178,52,0.1)'
-    },
-    container: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: isScrolled ? '8px 20px' : '12px 20px',
-      maxWidth: '1400px',
-      margin: '0 auto',
-      transition: 'padding 0.3s ease',
-      '@media (max-width: 768px)': {
-        padding: '10px 15px'
-      }
-    },
-    logo: {
-      display: 'flex',
-      alignItems: 'center',
-      textDecoration: 'none',
-      gap: '4px'
-    },
-    logoIcon: {
-      fontSize: '24px',
-      color: '#f9b234',
-      transition: 'transform 0.3s ease'
-    },
-    logoText: {
-      fontSize: '22px',
-      fontWeight: '800',
-      background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
-      WebkitBackgroundClip: 'text',
-      WebkitTextFillColor: 'transparent',
-      letterSpacing: '-0.5px',
-      '@media (max-width: 480px)': {
-        fontSize: '18px'
-      }
-    },
-    logoSpan: {
-      color: '#f9b234',
-      fontWeight: '800',
-      fontSize: '22px',
-      '@media (max-width: 480px)': {
-        fontSize: '18px'
-      }
-    },
-
-    // Desktop Navigation
-    nav: {
-      display: 'flex',
-      gap: '5px',
-      alignItems: 'center',
-      '@media (max-width: 1024px)': {
-        display: isMobileMenuOpen ? 'flex' : 'none',
-        flexDirection: 'column',
-        position: 'absolute',
-        top: '100%',
-        left: 0,
-        right: 0,
-        background: '#fff',
-        padding: '20px',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
-        gap: '10px',
-        animation: 'slideDown 0.3s ease'
-      }
-    },
-    navItem: {
-      position: 'relative',
-      listStyle: 'none',
-      width: '100%'
-    },
-    navLink: (isActive) => ({
-      textDecoration: 'none',
-      color: isActive ? '#1e3c72' : '#4a5568',
-      fontWeight: isActive ? '600' : '500',
-      fontSize: '14px',
-      padding: '8px 12px',
-      borderRadius: '8px',
-      transition: 'all 0.2s ease',
-      background: isActive ? 'rgba(249,178,52,0.08)' : 'transparent',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '6px',
-      cursor: 'pointer',
-      border: 'none',
-      fontFamily: "'Inter', 'Segoe UI', sans-serif",
-      whiteSpace: 'nowrap',
-      '@media (max-width: 1024px)': {
-        fontSize: '16px',
-        padding: '12px 15px',
-        width: '100%'
-      }
-    }),
-    activeIndicator: {
-      position: 'absolute',
-      bottom: '-2px',
-      left: '12px',
-      right: '12px',
-      height: '2px',
-      background: 'linear-gradient(90deg, #f9b234, #f5af19)',
-      borderRadius: '2px 2px 0 0',
-      '@media (max-width: 1024px)': {
-        display: 'none'
-      }
-    },
-
-    // Right Section
-    rightSection: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '10px'
-    },
-
-    // Search Box - Desktop
-    searchBox: {
-      display: 'flex',
-      alignItems: 'center',
-      background: '#f5f7fa',
-      borderRadius: '50px',
-      padding: '3px 3px 3px 12px',
-      border: '1px solid #e0e7ff',
-      transition: 'all 0.3s ease',
-      '@media (max-width: 768px)': {
-        display: 'none' // Hide on mobile
-      }
-    },
-    searchInput: {
-      border: 'none',
-      background: 'transparent',
-      outline: 'none',
-      padding: '6px 0',
-      width: '160px',
-      fontSize: '13px',
-      color: '#333',
-      fontFamily: "'Inter', 'Segoe UI', sans-serif"
-    },
-    searchButton: {
-      background: 'linear-gradient(135deg, #f9b234, #f5af19)',
-      border: 'none',
-      borderRadius: '50px',
-      padding: '6px 12px',
-      color: '#1e3c72',
-      fontWeight: '600',
-      fontSize: '12px',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '4px'
-    },
-
-    // Admin Button
-    adminButton: {
-      background: 'linear-gradient(135deg, #1e3c72, #2a5298)',
-      color: '#fff',
-      border: 'none',
-      padding: '8px 16px',
-      borderRadius: '50px',
-      fontWeight: '600',
-      fontSize: '13px',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      boxShadow: '0 4px 10px rgba(30,60,114,0.2)',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '6px',
-      textDecoration: 'none',
-      fontFamily: "'Inter', 'Segoe UI', sans-serif",
-      '@media (max-width: 480px)': {
-        padding: '6px 12px',
-        fontSize: '12px'
-      }
-    },
-
-    // User Avatar
-    userMenu: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px'
-    },
-    avatar: {
-      width: '35px',
-      height: '35px',
-      borderRadius: '50%',
-      background: 'linear-gradient(135deg, #f9b234, #f5af19)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      color: '#1e3c72',
-      fontWeight: 'bold',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      fontSize: '14px',
-      '@media (max-width: 480px)': {
-        width: '32px',
-        height: '32px',
-        fontSize: '12px'
-      }
-    },
-
-    // Mobile Menu Button
-    mobileMenuButton: {
-      display: 'none',
-      background: 'none',
-      border: 'none',
-      fontSize: '22px',
-      color: '#1e3c72',
-      cursor: 'pointer',
-      padding: '5px',
-      '@media (max-width: 1024px)': {
-        display: 'block'
-      }
-    },
-
-    // Mobile Search
-    mobileSearch: {
-      display: 'none',
-      '@media (max-width: 768px)': {
-        display: 'flex',
-        alignItems: 'center',
-        background: '#f5f7fa',
-        borderRadius: '50px',
-        padding: '5px 5px 5px 15px',
-        border: '1px solid #e0e7ff',
-        margin: '10px 15px'
-      }
-    },
-
-    // Icons
-    icon: {
-      fontSize: '14px',
-      '@media (max-width: 1024px)': {
-        fontSize: '16px'
-      }
-    },
-
-    // Animation
-    '@keyframes slideDown': {
-      from: {
-        opacity: 0,
-        transform: 'translateY(-10px)'
-      },
-      to: {
-        opacity: 1,
-        transform: 'translateY(0)'
-      }
-    }
-  };
-
   const isActive = (path) => location.pathname === path;
+  
+  // Check if current page is Home page
+  const isHomePage = location.pathname === '/';
 
   const navItems = [
-    { path: '/', label: 'Home', icon: 'fa-home' },
-    { path: '/properties', label: 'Properties', icon: 'fa-building' },
-    { path: '/sell', label: 'Sell', icon: 'fa-tag' },
-    { path: '/about', label: 'About', icon: 'fa-info-circle' },
-    { path: '/contact', label: 'Contact', icon: 'fa-phone' }
+    { path: '/', label: 'Home', icon: FaHome },
+    { path: '/buy', label: 'Buy', icon: FaBuilding },
+    { path: '/rent', label: 'Rent', icon: FaTag },
+    { path: '/sell', label: 'Sell', icon: FaTag },
   ];
 
+  const colors = {
+    primary: '#1e3c72',
+    accent: '#f9b234',
+    white: '#ffffff',
+    footerBg: '#0a2a3a',
+    danger: '#dc3545',
+    info: '#17a2b8',
+    light: '#f8f9fa'
+  };
+
+  // Background logic: 
+  // - Home page: transparent at top, footer color on scroll
+  // - Other pages: always footer color
+  const getBackground = () => {
+    if (!isHomePage) {
+      return colors.footerBg; // Always footer color for non-home pages
+    }
+    return isScrolled ? colors.footerBg : 'transparent'; // Home page: transparent at top, color on scroll
+  };
+
   return (
-    <header style={styles.header}>
-      <div style={styles.container}>
-        {/* Logo */}
-        <Link to="/" style={styles.logo}>
-          <span style={styles.logoIcon}>🏠</span>
-          <span style={styles.logoText}>AKPS</span>
-          <span style={styles.logoSpan}>Realty</span>
-        </Link>
-
-        {/* Desktop Navigation */}
-        <nav style={styles.nav}>
-          {navItems.map((item) => (
-            <div key={item.path} style={styles.navItem}>
-              <Link 
-                to={item.path} 
-                style={styles.navLink(isActive(item.path))}
-                onMouseEnter={(e) => {
-                  if (!isActive(item.path)) {
-                    e.currentTarget.style.background = 'rgba(249,178,52,0.1)';
-                    e.currentTarget.style.color = '#f9b234';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive(item.path)) {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = '#4a5568';
-                  }
-                }}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <i className={`fas ${item.icon}`} style={styles.icon}></i>
-                <span>{item.label}</span>
-              </Link>
-              {isActive(item.path) && <span style={styles.activeIndicator}></span>}
+    <>
+      <header style={{
+        background: getBackground(),
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+        transition: 'background 0.3s ease',
+        boxShadow: (isScrolled || !isHomePage) ? '0 2px 10px rgba(0,0,0,0.1)' : 'none',
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '12px 20px',
+          maxWidth: '1400px',
+          margin: '0 auto',
+        }}>
+          {/* Logo */}
+          <Link to="/" style={{
+            display: 'flex',
+            alignItems: 'center',
+            textDecoration: 'none',
+            gap: '8px'
+          }}>
+            <div style={{
+              width: '38px',
+              height: '38px',
+              background: `linear-gradient(135deg, ${colors.accent}, #e5a01a)`,
+              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#1e3c72' }}>4P</span>
             </div>
-          ))}
-        </nav>
-
-        {/* Right Section */}
-        <div style={styles.rightSection}>
-          {/* Desktop Search */}
-          <div style={styles.searchBox}>
-            <input 
-              type="text" 
-              placeholder="Search..." 
-              style={styles.searchInput}
-            />
-            <button style={styles.searchButton}>
-              <i className="fas fa-search" style={{fontSize: '11px'}}></i>
-              <span>Go</span>
-            </button>
-          </div>
-
-          {/* Admin Button */}
-          <Link 
-            to="/admin" 
-            style={styles.adminButton}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 15px rgba(30,60,114,0.3)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 10px rgba(30,60,114,0.2)';
-            }}
-          >
-            <i className="fas fa-user-shield" style={{fontSize: '12px'}}></i>
-            <span className="admin-text">Admin</span>
+            <div>
+              <span style={{ 
+                fontSize: '20px', 
+                fontWeight: '800', 
+                color: colors.white,
+                textShadow: (isHomePage && !isScrolled) ? '0 1px 2px rgba(0,0,0,0.5)' : 'none'
+              }}>4PGR</span>
+              <span style={{ 
+                fontSize: '20px', 
+                fontWeight: '800', 
+                color: colors.accent,
+                textShadow: (isHomePage && !isScrolled) ? '0 1px 2px rgba(0,0,0,0.5)' : 'none'
+              }}> Realty</span>
+            </div>
           </Link>
 
-          {/* User Avatar */}
-          <div style={styles.userMenu}>
-            <div 
-              style={styles.avatar}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.05)';
-                e.currentTarget.style.boxShadow = '0 4px 8px rgba(249,178,52,0.3)';
+          {/* Navigation */}
+          <nav style={{ 
+            display: 'flex', 
+            gap: '4px', 
+            alignItems: 'center',
+            background: (isScrolled || !isHomePage) ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.3)',
+            padding: '3px',
+            borderRadius: '50px',
+          }}>
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isItemActive = isActive(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  style={{
+                    textDecoration: 'none',
+                    color: isItemActive ? colors.accent : colors.white,
+                    fontWeight: isItemActive ? '600' : '500',
+                    fontSize: '13px',
+                    padding: '6px 14px',
+                    borderRadius: '50px',
+                    transition: 'all 0.2s ease',
+                    background: isItemActive ? `rgba(249,178,52,0.2)` : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isItemActive) {
+                      e.currentTarget.style.background = `rgba(249,178,52,0.2)`;
+                      e.currentTarget.style.color = colors.accent;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isItemActive) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = colors.white;
+                    }
+                  }}
+                >
+                  <Icon size={14} />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Right Icons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* Favorites */}
+            <button
+              style={{
+                background: (isScrolled || !isHomePage) ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.3)',
+                border: 'none',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: colors.white,
+                position: 'relative'
               }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = colors.danger}
+              onMouseLeave={(e) => e.currentTarget.style.background = (isScrolled || !isHomePage) ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.3)'}
             >
-              <i className="fas fa-user" style={{fontSize: '14px'}}></i>
+              <FaHeart size={14} />
+              <span style={{
+                position: 'absolute',
+                top: '-3px',
+                right: '-3px',
+                background: colors.accent,
+                color: '#1e3c72',
+                fontSize: '9px',
+                width: '16px',
+                height: '16px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>3</span>
+            </button>
+
+            {/* Notifications */}
+            <button
+              style={{
+                background: (isScrolled || !isHomePage) ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.3)',
+                border: 'none',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: colors.white,
+                position: 'relative'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = colors.info}
+              onMouseLeave={(e) => e.currentTarget.style.background = (isScrolled || !isHomePage) ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.3)'}
+            >
+              <FaBell size={14} />
+              <span style={{
+                position: 'absolute',
+                top: '-3px',
+                right: '-3px',
+                background: colors.danger,
+                color: colors.white,
+                fontSize: '9px',
+                width: '16px',
+                height: '16px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>5</span>
+            </button>
+
+            {/* User Profile */}
+            <div style={{ position: 'relative' }}>
+              <div
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  background: `linear-gradient(135deg, ${colors.accent}, #e5a01a)`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  border: `1px solid ${colors.white}`,
+                  boxShadow: (isHomePage && !isScrolled) ? '0 2px 5px rgba(0,0,0,0.2)' : 'none'
+                }}
+              >
+                <FaUser style={{ color: '#1e3c72', fontSize: '14px' }} />
+              </div>
+              
+              {isProfileOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '45px',
+                  right: '0',
+                  width: '250px',
+                  background: colors.white,
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                  overflow: 'hidden',
+                  zIndex: 1000
+                }}>
+                  <div style={{
+                    background: `linear-gradient(135deg, ${colors.primary}, #2a5298)`,
+                    padding: '15px',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{
+                      width: '50px',
+                      height: '50px',
+                      borderRadius: '50%',
+                      background: colors.accent,
+                      margin: '0 auto 8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <FaUser size={20} style={{ color: '#1e3c72' }} />
+                    </div>
+                    <h4 style={{ color: colors.white, fontSize: '14px' }}>Guest User</h4>
+                    <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '11px' }}>Welcome to 4PGR Realty</p>
+                  </div>
+                  <div style={{ padding: '10px' }}>
+                    <Link to="/login" style={{
+                      display: 'block',
+                      padding: '8px 12px',
+                      color: colors.primary,
+                      textDecoration: 'none',
+                      borderRadius: '6px',
+                      fontSize: '13px'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = colors.light}>
+                      Sign In
+                    </Link>
+                    <Link to="/register" style={{
+                      display: 'block',
+                      padding: '8px 12px',
+                      color: colors.primary,
+                      textDecoration: 'none',
+                      borderRadius: '6px',
+                      fontSize: '13px'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = colors.light}>
+                      Create Account
+                    </Link>
+                    <hr style={{ margin: '8px 0' }} />
+                    <Link to="/dashboard" style={{
+                      display: 'block',
+                      padding: '8px 12px',
+                      color: colors.primary,
+                      textDecoration: 'none',
+                      borderRadius: '6px',
+                      fontSize: '13px'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = colors.light}>
+                      Dashboard
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              style={{
+                display: 'none',
+                background: (isScrolled || !isHomePage) ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.3)',
+                border: 'none',
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
+                fontSize: '18px',
+                color: colors.white,
+                cursor: 'pointer',
+              }}
+              className="mobile-menu-btn"
+            >
+              {isMobileMenuOpen ? <FaTimes /> : <FaBars />}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <>
+          <div
+            onClick={() => setIsMobileMenuOpen(false)}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.6)',
+              zIndex: 1000,
+            }}
+          />
+          
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            right: 0,
+            width: '280px',
+            height: '100vh',
+            background: colors.white,
+            zIndex: 1001,
+            padding: '20px',
+            overflowY: 'auto'
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              marginBottom: '20px', 
+              paddingBottom: '15px', 
+              borderBottom: `1px solid ${colors.light}` 
+            }}>
+              <div>
+                <span style={{ fontSize: '20px', fontWeight: 'bold', color: colors.primary }}>4PGR</span>
+                <span style={{ fontSize: '20px', fontWeight: 'bold', color: colors.accent }}> Realty</span>
+              </div>
+              <button 
+                onClick={() => setIsMobileMenuOpen(false)} 
+                style={{ 
+                  background: colors.light, 
+                  border: 'none', 
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  fontSize: '16px', 
+                  cursor: 'pointer'
+                }}
+              >
+                <FaTimes />
+              </button>
+            </div>
+            
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    style={{
+                      textDecoration: 'none',
+                      color: isActive(item.path) ? colors.accent : colors.primary,
+                      fontWeight: isActive(item.path) ? '600' : '500',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      background: isActive(item.path) ? `rgba(249,178,52,0.1)` : colors.light,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      fontSize: '14px'
+                    }}
+                  >
+                    <Icon size={14} /> {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div style={{
+              marginTop: '20px',
+              paddingTop: '15px',
+              borderTop: `1px solid ${colors.light}`
+            }}>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <Link to="/login" style={{
+                  flex: 1,
+                  textAlign: 'center',
+                  padding: '8px',
+                  background: colors.primary,
+                  color: colors.white,
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  fontSize: '13px'
+                }}>
+                  Sign In
+                </Link>
+                <Link to="/register" style={{
+                  flex: 1,
+                  textAlign: 'center',
+                  padding: '8px',
+                  background: 'transparent',
+                  border: `1px solid ${colors.primary}`,
+                  color: colors.primary,
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  fontSize: '13px'
+                }}>
+                  Register
+                </Link>
+              </div>
             </div>
           </div>
-
-          {/* Mobile Menu Button */}
-          <button 
-            style={styles.mobileMenuButton}
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            <i className={`fas ${isMobileMenuOpen ? 'fa-times' : 'fa-bars'}`}></i>
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Search (visible only on mobile) */}
-      {isMobileMenuOpen && (
-        <div style={styles.mobileSearch}>
-          <input 
-            type="text" 
-            placeholder="Search properties..." 
-            style={{...styles.searchInput, width: '100%'}}
-          />
-          <button style={styles.searchButton}>
-            <i className="fas fa-search"></i>
-          </button>
-        </div>
+        </>
       )}
 
-      {/* Google Fonts */}
-      <style>
-        {`
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-          
-          * {
-            font-family: 'Inter', 'Segoe UI', sans-serif;
+      <style>{`
+        @media (max-width: 1024px) {
+          nav {
+            display: none !important;
           }
-
-          @media (max-width: 1024px) {
-            .admin-text {
-              display: none;
-            }
+          .mobile-menu-btn {
+            display: flex !important;
           }
-        `}
-      </style>
-    </header>
+        }
+        @media (max-width: 768px) {
+          .favorites-btn, .notifications-btn {
+            display: none !important;
+          }
+        }
+      `}</style>
+    </>
   );
 };
 

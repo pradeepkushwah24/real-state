@@ -1,130 +1,81 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { FaEnvelope, FaWhatsapp, FaTrash, FaEye, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaDownload } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 
 const AdminBuyers = () => {
+  const [buyers, setBuyers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedBuyers, setSelectedBuyers] = useState([]);
-  const [buyers] = useState([
-    {
-      id: 1,
-      name: 'Rahul Sharma',
-      mobile: '9876543210',
-      city: 'Delhi',
-      propertyId: 'RE1001',
-      timestamp: '2024-03-02 10:30 AM'
-    },
-    {
-      id: 2,
-      name: 'Priya Patel',
-      mobile: '8765432109',
-      city: 'Mumbai',
-      propertyId: 'RE1002',
-      timestamp: '2024-03-02 11:45 AM'
-    },
-    {
-      id: 3,
-      name: 'Amit Singh',
-      mobile: '7654321098',
-      city: 'Noida',
-      propertyId: 'RE1003',
-      timestamp: '2024-03-02 12:15 PM'
-    },
-    {
-      id: 4,
-      name: 'Neha Gupta',
-      mobile: '6543210987',
-      city: 'Gurugram',
-      propertyId: 'RE1004',
-      timestamp: '2024-03-02 02:20 PM'
-    },
-    {
-      id: 5,
-      name: 'Vikram Mehta',
-      mobile: '5432109876',
-      city: 'Faridabad',
-      propertyId: 'RE1005',
-      timestamp: '2024-03-02 03:45 PM'
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
+  useEffect(() => {
+    fetchBuyers();
+  }, []);
+
+  const fetchBuyers = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const token = localStorage.getItem('adminToken');
+      
+      if (!token) {
+        setError('Please login again');
+        setLoading(false);
+        return;
+      }
+      
+      const response = await fetch('https://real-state-backend-xb5z.onrender.com/api/buyers', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setBuyers(data.data || []);
+      } else {
+        setError(data.message || 'Failed to fetch buyers');
+        toast.error(data.message || 'Failed to fetch buyers');
+      }
+    } catch (error) {
+      console.error('Fetch error:', error);
+      setError('Network error. Please check backend.');
+      toast.error('Network error. Please check backend.');
+    } finally {
+      setLoading(false);
     }
-  ]);
-
-  const containerStyle = {
-    background: '#fff',
-    borderRadius: '10px',
-    padding: '30px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
   };
 
-  const headerStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px'
-  };
-
-  const titleStyle = {
-    color: '#1e3c72',
-    fontSize: '24px',
-    margin: 0
-  };
-
-  const forwardActionsStyle = {
-    display: 'flex',
-    gap: '10px'
-  };
-
-  const emailBtnStyle = {
-    padding: '8px 16px',
-    background: '#007bff',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    fontWeight: 500,
-    transition: 'background 0.3s ease'
-  };
-
-  const whatsappBtnStyle = {
-    padding: '8px 16px',
-    background: '#25D366',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    fontWeight: 500,
-    transition: 'background 0.3s ease'
-  };
-
-  const tableWrapperStyle = {
-    overflowX: 'auto'
-  };
-
-  const tableStyle = {
-    width: '100%',
-    borderCollapse: 'collapse',
-    marginTop: '20px'
-  };
-
-  const thStyle = {
-    textAlign: 'left',
-    padding: '12px',
-    background: '#f8f9fa',
-    borderBottom: '2px solid #e0e0e0',
-    color: '#333',
-    fontWeight: 600
-  };
-
-  const tdStyle = {
-    padding: '12px',
-    borderBottom: '1px solid #e0e0e0',
-    color: '#666'
-  };
-
-  const checkboxStyle = {
-    width: '20px',
-    height: '20px',
-    cursor: 'pointer'
-  };
-
-  const rowHoverStyle = {
-    background: '#f5f5f5'
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this buyer?')) return;
+    
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`https://real-state-backend-xb5z.onrender.com/api/buyers/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        toast.success('Buyer deleted');
+        fetchBuyers();
+      } else {
+        toast.error(data.message || 'Failed to delete');
+      }
+    } catch (error) {
+      toast.error('Network error');
+    }
   };
 
   const handleSelectAll = (e) => {
@@ -137,93 +88,343 @@ const AdminBuyers = () => {
 
   const handleSelect = (id) => {
     if (selectedBuyers.includes(id)) {
-      setSelectedBuyers(selectedBuyers.filter(bId => bId !== id));
+      setSelectedBuyers(selectedBuyers.filter(b => b !== id));
     } else {
       setSelectedBuyers([...selectedBuyers, id]);
     }
   };
 
   const handleForward = (type) => {
-    const selectedData = buyers.filter(b => selectedBuyers.includes(b.id));
-    console.log(`Forwarding via ${type}:`, selectedData);
-    alert(`Selected buyers forwarded to ${type}`);
+    const selected = buyers.filter(b => selectedBuyers.includes(b.id));
+    toast.success(`Forwarding ${selected.length} buyers via ${type}`);
   };
 
+  // Filter buyers
+  const filteredBuyers = buyers.filter(buyer =>
+    buyer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    buyer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    buyer.phone?.includes(searchTerm) ||
+    buyer.city?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Pagination
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentBuyers = filteredBuyers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredBuyers.length / itemsPerPage);
+
+  const styles = {
+    container: {
+      background: '#fff',
+      borderRadius: '16px',
+      padding: '0',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+      width: '100%',
+      overflowX: 'auto'
+    },
+    header: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '20px 24px',
+      borderBottom: '1px solid #e2e8f0',
+      flexWrap: 'wrap',
+      gap: '15px'
+    },
+    title: {
+      fontSize: '20px',
+      fontWeight: 'bold',
+      color: '#1e3c72',
+      margin: 0
+    },
+    stats: {
+      fontSize: '14px',
+      color: '#64748b',
+      marginTop: '4px'
+    },
+    searchBox: {
+      display: 'flex',
+      gap: '10px',
+      alignItems: 'center'
+    },
+    searchInput: {
+      padding: '8px 12px',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      fontSize: '14px',
+      width: '250px',
+      outline: 'none'
+    },
+    refreshBtn: {
+      padding: '8px 12px',
+      background: '#f1f5f9',
+      border: 'none',
+      borderRadius: '8px',
+      cursor: 'pointer'
+    },
+    forwardActions: {
+      display: 'flex',
+      gap: '10px'
+    },
+    tableWrapper: {
+      overflowX: 'auto',
+      width: '100%'
+    },
+    table: {
+      width: '100%',
+      borderCollapse: 'collapse',
+      minWidth: '800px'
+    },
+    th: {
+      textAlign: 'left',
+      padding: '12px 16px',
+      background: '#f8fafc',
+      borderBottom: '2px solid #e2e8f0',
+      fontWeight: '600',
+      color: '#1e3c72',
+      fontSize: '13px'
+    },
+    td: {
+      padding: '12px 16px',
+      borderBottom: '1px solid #e2e8f0',
+      fontSize: '14px',
+      color: '#334155'
+    },
+    btnEmail: {
+      padding: '6px 12px',
+      background: '#3b82f6',
+      color: '#fff',
+      border: 'none',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '6px',
+      fontSize: '12px'
+    },
+    btnWhatsapp: {
+      padding: '6px 12px',
+      background: '#25D366',
+      color: '#fff',
+      border: 'none',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '6px',
+      fontSize: '12px'
+    },
+    btnDelete: {
+      padding: '6px 10px',
+      background: '#ef4444',
+      color: '#fff',
+      border: 'none',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      marginLeft: '8px',
+      fontSize: '12px'
+    },
+    btnView: {
+      padding: '6px 10px',
+      background: '#10b981',
+      color: '#fff',
+      border: 'none',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      fontSize: '12px'
+    },
+    pagination: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: '8px',
+      padding: '20px',
+      borderTop: '1px solid #e2e8f0',
+      flexWrap: 'wrap'
+    },
+    pageBtn: {
+      padding: '6px 12px',
+      background: '#f1f5f9',
+      border: 'none',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      fontSize: '13px'
+    },
+    errorBox: {
+      background: '#fee2e2',
+      color: '#991b1b',
+      padding: '15px',
+      borderRadius: '8px',
+      margin: '20px',
+      textAlign: 'center'
+    },
+    emptyState: {
+      textAlign: 'center',
+      padding: '60px',
+      color: '#64748b'
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+        <div className="spinner"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.errorBox}>
+          <strong>Error:</strong> {error}
+          <br />
+          <button 
+            onClick={fetchBuyers}
+            style={{
+              marginTop: '10px',
+              padding: '8px 16px',
+              background: '#f9b234',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div style={containerStyle}>
-      <div style={headerStyle}>
-        <h2 style={titleStyle}>Buyers List</h2>
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <div>
+          <h2 style={styles.title}>Buyers List</h2>
+          <p style={styles.stats}>Total: {buyers.length} buyers</p>
+        </div>
+        
+        <div style={styles.searchBox}>
+          <input
+            type="text"
+            placeholder="Search by name, email, phone, city..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={styles.searchInput}
+          />
+          <button onClick={fetchBuyers} style={styles.refreshBtn}>
+            <FaDownload /> Refresh
+          </button>
+        </div>
+        
         {selectedBuyers.length > 0 && (
-          <div style={forwardActionsStyle}>
-            <button 
-              style={emailBtnStyle}
-              onClick={() => handleForward('email')}
-              onMouseEnter={(e) => e.target.style.background = '#0056b3'}
-              onMouseLeave={(e) => e.target.style.background = '#007bff'}
-            >
-              <i className="fas fa-envelope" style={{marginRight: '5px'}}></i>
-              Forward to Email
+          <div style={styles.forwardActions}>
+            <button style={styles.btnEmail} onClick={() => handleForward('email')}>
+              <FaEnvelope /> Email ({selectedBuyers.length})
             </button>
-            <button 
-              style={whatsappBtnStyle}
-              onClick={() => handleForward('whatsapp')}
-              onMouseEnter={(e) => e.target.style.background = '#128C7E'}
-              onMouseLeave={(e) => e.target.style.background = '#25D366'}
-            >
-              <i className="fab fa-whatsapp" style={{marginRight: '5px'}}></i>
-              Forward to WhatsApp
+            <button style={styles.btnWhatsapp} onClick={() => handleForward('whatsapp')}>
+              <FaWhatsapp /> WhatsApp ({selectedBuyers.length})
             </button>
           </div>
         )}
       </div>
 
-      <div style={tableWrapperStyle}>
-        <table style={tableStyle}>
+      <div style={styles.tableWrapper}>
+        <table style={styles.table}>
           <thead>
             <tr>
-              <th style={thStyle}>
+              <th style={styles.th}>
                 <input 
                   type="checkbox" 
                   onChange={handleSelectAll}
                   checked={selectedBuyers.length === buyers.length && buyers.length > 0}
-                  style={checkboxStyle}
                 />
               </th>
-              <th style={thStyle}>Property ID</th>
-              <th style={thStyle}>Buyer Name</th>
-              <th style={thStyle}>Mobile</th>
-              <th style={thStyle}>City</th>
-              <th style={thStyle}>Date/Time</th>
+              <th style={styles.th}>Property ID</th>
+              <th style={styles.th}>Name</th>
+              <th style={styles.th}>Mobile</th>
+              <th style={styles.th}>Email</th>
+              <th style={styles.th}>City</th>
+              <th style={styles.th}>Date</th>
+              <th style={styles.th}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {buyers.map((buyer, index) => (
-              <tr 
-                key={buyer.id}
-                style={selectedBuyers.includes(buyer.id) ? rowHoverStyle : {}}
-              >
-                <td style={tdStyle}>
-                  <input 
+            {currentBuyers.map((buyer) => (
+              <tr key={buyer.id}>
+                <td style={styles.td}>
+                  <input
                     type="checkbox"
                     checked={selectedBuyers.includes(buyer.id)}
                     onChange={() => handleSelect(buyer.id)}
-                    style={checkboxStyle}
                   />
                 </td>
-                <td style={tdStyle}>{buyer.propertyId}</td>
-                <td style={tdStyle}>{buyer.name}</td>
-                <td style={tdStyle}>{buyer.mobile}</td>
-                <td style={tdStyle}>{buyer.city}</td>
-                <td style={tdStyle}>{buyer.timestamp}</td>
+                <td style={styles.td}>
+                  <span style={{
+                    background: '#f1f5f9',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontFamily: 'monospace'
+                  }}>
+                    {buyer.property_id || 'N/A'}
+                  </span>
+                </td>
+                <td style={styles.td}>
+                  <strong>{buyer.name}</strong>
+                </td>
+                <td style={styles.td}>
+                  <a href={`tel:${buyer.phone}`} style={{ color: '#1e3c72', textDecoration: 'none' }}>
+                    <FaPhone size={12} style={{ marginRight: '4px' }} /> {buyer.phone}
+                  </a>
+                </td>
+                <td style={styles.td}>
+                  {buyer.email?.length > 25 ? buyer.email.substring(0, 22) + '...' : buyer.email}
+                </td>
+                <td style={styles.td}>
+                  <FaMapMarkerAlt size={12} style={{ marginRight: '4px', color: '#f9b234' }} />
+                  {buyer.city}
+                </td>
+                <td style={styles.td}>
+                  <FaCalendarAlt size={12} style={{ marginRight: '4px', color: '#64748b' }} />
+                  {new Date(buyer.created_at).toLocaleDateString()}
+                </td>
+                <td style={styles.td}>
+                  <button style={styles.btnView} onClick={() => alert('View: ' + buyer.name)}>
+                    <FaEye /> View
+                  </button>
+                  <button style={styles.btnDelete} onClick={() => handleDelete(buyer.id)}>
+                    <FaTrash /> Del
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
+        
+        {currentBuyers.length === 0 && (
+          <div style={styles.emptyState}>
+            <p>No buyers found</p>
+          </div>
+        )}
       </div>
 
-      {buyers.length === 0 && (
-        <div style={{textAlign: 'center', padding: '40px', color: '#666'}}>
-          No buyers found
+      {totalPages > 1 && (
+        <div style={styles.pagination}>
+          <button style={styles.pageBtn} onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>
+            First
+          </button>
+          <button style={styles.pageBtn} onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
+            Previous
+          </button>
+          <span>Page {currentPage} of {totalPages}</span>
+          <button style={styles.pageBtn} onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>
+            Next
+          </button>
+          <button style={styles.pageBtn} onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}>
+            Last
+          </button>
         </div>
       )}
     </div>

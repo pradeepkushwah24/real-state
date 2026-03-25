@@ -1,303 +1,321 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { FaCheck, FaTimes, FaEye, FaMapMarkerAlt, FaCalendarAlt, FaImages, FaVideo, FaTrash, FaDownload } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 
 const AdminSellers = () => {
-  const [sellers, setSellers] = useState([
-    {
-      id: 1,
-      name: 'Amit Kumar',
-      propertyType: 'House',
-      size: '2500 sq.ft',
-      price: '₹1.5 Cr',
-      location: 'Noida',
-      status: 'pending',
-      timestamp: '2024-03-02 11:45 AM',
-      images: 4,
-      videos: 1
-    },
-    {
-      id: 2,
-      name: 'Sneha Reddy',
-      propertyType: 'Flat',
-      size: '1800 sq.ft',
-      price: '₹95 Lakhs',
-      location: 'Gurugram',
-      status: 'approved',
-      timestamp: '2024-03-02 10:30 AM',
-      images: 6,
-      videos: 2
-    },
-    {
-      id: 3,
-      name: 'Rajesh Khanna',
-      propertyType: 'Plot',
-      size: '300 sq.yd',
-      price: '₹75 Lakhs',
-      location: 'Greater Noida',
-      status: 'pending',
-      timestamp: '2024-03-02 09:15 AM',
-      images: 3,
-      videos: 0
-    },
-    {
-      id: 4,
-      name: 'Pooja Malhotra',
-      propertyType: 'Commercial',
-      size: '1500 sq.ft',
-      price: '₹2.2 Cr',
-      location: 'Delhi',
-      status: 'rejected',
-      timestamp: '2024-03-01 04:20 PM',
-      images: 5,
-      videos: 1
-    }
-  ]);
-
+  const [sellers, setSellers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const [selectedSeller, setSelectedSeller] = useState(null);
-  const [showDetails, setShowDetails] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
-  const containerStyle = {
-    background: '#fff',
-    borderRadius: '10px',
-    padding: '30px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+  useEffect(() => {
+    fetchSellers();
+  }, []);
+
+  const fetchSellers = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const token = localStorage.getItem('adminToken');
+      
+      if (!token) {
+        setError('No token found. Please login again.');
+        setLoading(false);
+        return;
+      }
+      
+      const response = await fetch('https://real-state-backend-xb5z.onrender.com/api/sellers', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      console.log('Sellers API Response:', data);
+      
+      if (response.ok && data.success) {
+        // ✅ Safe way - don't parse JSON if not needed
+        const processedSellers = data.data.map(seller => ({
+          ...seller,
+          photos: seller.photos || [],
+          videos: seller.videos || []
+        }));
+        setSellers(processedSellers);
+      } else {
+        setError(data.message || 'Failed to fetch sellers');
+        toast.error(data.message || 'Failed to fetch sellers');
+      }
+    } catch (error) {
+      console.error('Fetch error:', error);
+      setError('Network error. Please check if backend is running.');
+      toast.error('Network error. Please check if backend is running.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const titleStyle = {
-    color: '#1e3c72',
-    fontSize: '24px',
-    marginBottom: '20px'
+  const handleApprove = async (id) => {
+    if (!window.confirm('Approve this seller request?')) return;
+    
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`https://real-state-backend-xb5z.onrender.com/api/sellers/${id}/approve`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        toast.success('Seller approved successfully!');
+        fetchSellers();
+      } else {
+        toast.error(data.message || 'Failed to approve');
+      }
+    } catch (error) {
+      toast.error('Network error');
+    }
   };
 
-  const tableStyle = {
-    width: '100%',
-    borderCollapse: 'collapse'
+  const handleReject = async (id) => {
+    if (!window.confirm('Reject this seller request?')) return;
+    
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`https://real-state-backend-xb5z.onrender.com/api/sellers/${id}/reject`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        toast.success('Seller rejected');
+        fetchSellers();
+      } else {
+        toast.error(data.message || 'Failed to reject');
+      }
+    } catch (error) {
+      toast.error('Network error');
+    }
   };
 
-  const thStyle = {
-    textAlign: 'left',
-    padding: '12px',
-    background: '#f8f9fa',
-    borderBottom: '2px solid #e0e0e0',
-    color: '#333',
-    fontWeight: 600
-  };
-
-  const tdStyle = {
-    padding: '12px',
-    borderBottom: '1px solid #e0e0e0',
-    color: '#666'
-  };
-
-  const statusBadgeStyle = (status) => ({
-    padding: '4px 8px',
-    borderRadius: '4px',
-    fontSize: '12px',
-    fontWeight: 600,
-    background: status === 'approved' ? '#d4edda' : 
-                status === 'rejected' ? '#f8d7da' : '#fff3cd',
-    color: status === 'approved' ? '#155724' : 
-           status === 'rejected' ? '#721c24' : '#856404'
-  });
-
-  const actionBtnStyle = {
-    padding: '4px 8px',
-    margin: '0 4px',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '12px',
-    fontWeight: 500
-  };
-
-  const viewBtnStyle = {
-    ...actionBtnStyle,
-    background: '#17a2b8',
-    color: '#fff'
-  };
-
-  const approveBtnStyle = {
-    ...actionBtnStyle,
-    background: '#28a745',
-    color: '#fff'
-  };
-
-  const rejectBtnStyle = {
-    ...actionBtnStyle,
-    background: '#dc3545',
-    color: '#fff'
-  };
-
-  const modalOverlayStyle = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'rgba(0,0,0,0.5)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000
-  };
-
-  const modalStyle = {
-    background: '#fff',
-    borderRadius: '10px',
-    padding: '30px',
-    maxWidth: '600px',
-    width: '90%',
-    maxHeight: '80vh',
-    overflowY: 'auto',
-    position: 'relative'
-  };
-
-  const modalCloseStyle = {
-    position: 'absolute',
-    top: '10px',
-    right: '10px',
-    background: 'none',
-    border: 'none',
-    fontSize: '24px',
-    cursor: 'pointer',
-    color: '#666'
-  };
-
-  const handleApprove = (id) => {
-    setSellers(sellers.map(seller => 
-      seller.id === id ? {...seller, status: 'approved'} : seller
-    ));
-    alert('Property approved and published successfully');
-  };
-
-  const handleReject = (id) => {
-    setSellers(sellers.map(seller => 
-      seller.id === id ? {...seller, status: 'rejected'} : seller
-    ));
-    alert('Property rejected');
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this seller request?')) return;
+    
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`https://real-state-backend-xb5z.onrender.com/api/sellers/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        toast.success('Seller deleted');
+        fetchSellers();
+      } else {
+        toast.error(data.message || 'Failed to delete');
+      }
+    } catch (error) {
+      toast.error('Network error');
+    }
   };
 
   const handleViewDetails = (seller) => {
     setSelectedSeller(seller);
-    setShowDetails(true);
+    setShowModal(true);
   };
 
-  return (
-    <div style={containerStyle}>
-      <h2 style={titleStyle}>Sellers List</h2>
+  const getStatusBadge = (status) => {
+    const statusColors = {
+      pending: { background: '#fef3c7', color: '#92400e' },
+      approved: { background: '#d1fae5', color: '#065f46' },
+      rejected: { background: '#fee2e2', color: '#991b1b' }
+    };
+    const style = statusColors[status] || statusColors.pending;
+    return {
+      padding: '4px 12px',
+      borderRadius: '20px',
+      fontSize: '12px',
+      fontWeight: '600',
+      background: style.background,
+      color: style.color,
+      display: 'inline-block'
+    };
+  };
 
-      <div style={{overflowX: 'auto'}}>
-        <table style={tableStyle}>
-          <thead>
-            <tr>
-              <th style={thStyle}>Seller Name</th>
-              <th style={thStyle}>Property Type</th>
-              <th style={thStyle}>Size</th>
-              <th style={thStyle}>Price</th>
-              <th style={thStyle}>Location</th>
-              <th style={thStyle}>Media</th>
-              <th style={thStyle}>Status</th>
-              <th style={thStyle}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sellers.map(seller => (
-              <tr key={seller.id}>
-                <td style={tdStyle}>{seller.name}</td>
-                <td style={tdStyle}>{seller.propertyType}</td>
-                <td style={tdStyle}>{seller.size}</td>
-                <td style={tdStyle}>{seller.price}</td>
-                <td style={tdStyle}>{seller.location}</td>
-                <td style={tdStyle}>
-                  {seller.images} 📷 | {seller.videos} 🎥
-                </td>
-                <td style={tdStyle}>
-                  <span style={statusBadgeStyle(seller.status)}>
-                    {seller.status}
-                  </span>
-                </td>
-                <td style={tdStyle}>
-                  <button 
-                    style={viewBtnStyle}
-                    onClick={() => handleViewDetails(seller)}
-                    onMouseEnter={(e) => e.target.style.background = '#138496'}
-                    onMouseLeave={(e) => e.target.style.background = '#17a2b8'}
-                  >
-                    View
-                  </button>
-                  {seller.status === 'pending' && (
-                    <>
-                      <button 
-                        style={approveBtnStyle}
-                        onClick={() => handleApprove(seller.id)}
-                        onMouseEnter={(e) => e.target.style.background = '#218838'}
-                        onMouseLeave={(e) => e.target.style.background = '#28a745'}
-                      >
-                        Approve
-                      </button>
-                      <button 
-                        style={rejectBtnStyle}
-                        onClick={() => handleReject(seller.id)}
-                        onMouseEnter={(e) => e.target.style.background = '#c82333'}
-                        onMouseLeave={(e) => e.target.style.background = '#dc3545'}
-                      >
-                        Reject
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+  const getTypeBadge = (type) => {
+    const typeColors = {
+      house: { background: '#1e3c72', color: '#fff' },
+      apartment: { background: '#2a5298', color: '#fff' },
+      plot: { background: '#28a745', color: '#fff' },
+      commercial: { background: '#f9b234', color: '#1e3c72' }
+    };
+    const style = typeColors[type] || typeColors.house;
+    return {
+      padding: '4px 10px',
+      borderRadius: '4px',
+      fontSize: '11px',
+      fontWeight: '500',
+      background: style.background,
+      color: style.color,
+      display: 'inline-block'
+    };
+  };
+
+  // Filter sellers
+  const filteredSellers = sellers.filter(seller => {
+    const matchesSearch = seller.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      seller.property_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      seller.location?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || seller.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  // Pagination
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentSellers = filteredSellers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredSellers.length / itemsPerPage);
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+        <div className="spinner"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ background: '#fff', borderRadius: '16px', padding: '20px', textAlign: 'center' }}>
+        <p style={{ color: 'red' }}>{error}</p>
+        <button onClick={fetchSellers} style={{ marginTop: '10px', padding: '8px 16px', background: '#f9b234', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ background: '#fff', borderRadius: '16px', padding: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '20px' }}>
+        <div>
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0a2a3a' }}>Seller Requests</h2>
+          <p style={{ fontSize: '14px', color: '#666' }}>Total: {sellers.length} | Pending: {sellers.filter(s => s.status === 'pending').length}</p>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: '8px', width: '200px' }}
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: '8px' }}
+          >
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <button onClick={fetchSellers} style={{ padding: '8px 12px', background: '#f1f5f9', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+            <FaDownload /> Refresh
+          </button>
+        </div>
       </div>
 
+      {sellers.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px', color: '#666' }}>
+          No sellers found
+        </div>
+      ) : (
+        <>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                  <th style={{ textAlign: 'left', padding: '12px' }}>Name</th>
+                  <th style={{ textAlign: 'left', padding: '12px' }}>Type</th>
+                  <th style={{ textAlign: 'left', padding: '12px' }}>Size</th>
+                  <th style={{ textAlign: 'left', padding: '12px' }}>Price</th>
+                  <th style={{ textAlign: 'left', padding: '12px' }}>Location</th>
+                  <th style={{ textAlign: 'left', padding: '12px' }}>Status</th>
+                  <th style={{ textAlign: 'left', padding: '12px' }}>Date</th>
+                  <th style={{ textAlign: 'left', padding: '12px' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentSellers.map((seller) => (
+                  <tr key={seller.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                    <td style={{ padding: '12px' }}><strong>{seller.name}</strong></td>
+                    <td style={{ padding: '12px' }}><span style={getTypeBadge(seller.property_type)}>{seller.property_type}</span></td>
+                    <td style={{ padding: '12px' }}>{seller.size}</td>
+                    <td style={{ padding: '12px' }}><strong style={{ color: '#f9b234' }}>{seller.price}</strong></td>
+                    <td style={{ padding: '12px' }}>{seller.location}</td>
+                    <td style={{ padding: '12px' }}><span style={getStatusBadge(seller.status)}>{seller.status}</span></td>
+                    <td style={{ padding: '12px' }}>{new Date(seller.created_at).toLocaleDateString()}</td>
+                    <td style={{ padding: '12px' }}>
+                      <button onClick={() => handleViewDetails(seller)} style={{ padding: '6px 10px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', marginRight: '5px' }}><FaEye /> View</button>
+                      {seller.status === 'pending' && (
+                        <>
+                          <button onClick={() => handleApprove(seller.id)} style={{ padding: '6px 10px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', marginRight: '5px' }}><FaCheck /> Approve</button>
+                          <button onClick={() => handleReject(seller.id)} style={{ padding: '6px 10px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}><FaTimes /> Reject</button>
+                        </>
+                      )}
+                      <button onClick={() => handleDelete(seller.id)} style={{ padding: '6px 10px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', marginLeft: '5px' }}><FaTrash /> Del</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '20px' }}>
+              <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} style={{ padding: '6px 12px', background: '#f1f5f9', border: 'none', borderRadius: '6px' }}>First</button>
+              <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1} style={{ padding: '6px 12px', background: '#f1f5f9', border: 'none', borderRadius: '6px' }}>Prev</button>
+              <span>Page {currentPage} of {totalPages}</span>
+              <button onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages} style={{ padding: '6px 12px', background: '#f1f5f9', border: 'none', borderRadius: '6px' }}>Next</button>
+              <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} style={{ padding: '6px 12px', background: '#f1f5f9', border: 'none', borderRadius: '6px' }}>Last</button>
+            </div>
+          )}
+        </>
+      )}
+
       {/* Details Modal */}
-      {showDetails && selectedSeller && (
-        <div style={modalOverlayStyle} onClick={() => setShowDetails(false)}>
-          <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
-            <button style={modalCloseStyle} onClick={() => setShowDetails(false)}>×</button>
-            
-            <h3 style={{color: '#1e3c72', marginBottom: '20px'}}>
-              Property Details - {selectedSeller.name}
-            </h3>
-            
-            <div style={{marginBottom: '15px'}}>
-              <strong>Property Type:</strong> {selectedSeller.propertyType}
-            </div>
-            <div style={{marginBottom: '15px'}}>
-              <strong>Size:</strong> {selectedSeller.size}
-            </div>
-            <div style={{marginBottom: '15px'}}>
-              <strong>Price:</strong> {selectedSeller.price}
-            </div>
-            <div style={{marginBottom: '15px'}}>
-              <strong>Location:</strong> {selectedSeller.location}
-            </div>
-            <div style={{marginBottom: '15px'}}>
-              <strong>Uploaded:</strong> {selectedSeller.timestamp}
-            </div>
-            <div style={{marginBottom: '15px'}}>
-              <strong>Photos:</strong> {selectedSeller.images} files
-            </div>
-            <div style={{marginBottom: '15px'}}>
-              <strong>Videos:</strong> {selectedSeller.videos} files
-            </div>
-            
-            <div style={{marginTop: '20px', textAlign: 'right'}}>
-              <button 
-                style={{
-                  padding: '8px 16px',
-                  background: '#1e3c72',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '5px',
-                  cursor: 'pointer'
-                }}
-                onClick={() => setShowDetails(false)}
-              >
-                Close
-              </button>
-            </div>
+      {showModal && selectedSeller && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowModal(false)}>
+          <div style={{ background: '#fff', borderRadius: '16px', maxWidth: '500px', width: '90%', padding: '24px' }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ color: '#0a2a3a', marginBottom: '15px' }}>Property Details</h3>
+            <p><strong>Seller:</strong> {selectedSeller.name}</p>
+            <p><strong>Property Type:</strong> {selectedSeller.property_type}</p>
+            <p><strong>Size:</strong> {selectedSeller.size}</p>
+            <p><strong>Price:</strong> {selectedSeller.price}</p>
+            <p><strong>Location:</strong> {selectedSeller.location}</p>
+            <p><strong>Description:</strong> {selectedSeller.description || 'No description'}</p>
+            <button onClick={() => setShowModal(false)} style={{ marginTop: '20px', padding: '10px 20px', background: '#f9b234', border: 'none', borderRadius: '8px', cursor: 'pointer', width: '100%' }}>Close</button>
           </div>
         </div>
       )}

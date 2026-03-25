@@ -1,194 +1,276 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { FaMapMarkerAlt, FaBed, FaBath, FaVectorSquare, FaHeart, FaShare, FaPhone } from 'react-icons/fa';
 import ContactPopup from './ContactPopup';
 
 const PropertyCard = ({ property }) => {
-  const [showContactPopup, setShowContactPopup] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [showContactPopup, setShowContactPopup] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  // Default images based on property type
-  const getDefaultImage = (type) => {
-    const images = {
-      House: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=500',
-      Flat: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=500',
-      Apartment: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=500',
-      Commercial: 'https://images.unsplash.com/photo-1556912998-c57cc6b63cd7?w=500',
-      Plot: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=500',
-      default: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=500'
-    };
-    return images[type] || images.default;
+  const formatPrice = (price) => {
+    if (!price) return 'Price on Request';
+    
+    // Remove any existing ₹ symbol and extra spaces
+    let cleanPrice = price.toString().replace(/[₹,]/g, '').trim();
+    
+    // Check if price is in Lakhs or Crores
+    if (cleanPrice.toLowerCase().includes('lakh')) {
+      return `₹${cleanPrice}`;
+    }
+    if (cleanPrice.toLowerCase().includes('cr')) {
+      return `₹${cleanPrice}`;
+    }
+    
+    // Try to parse as number
+    const numPrice = parseFloat(cleanPrice);
+    if (isNaN(numPrice)) return `₹${price}`;
+    
+    if (numPrice >= 10000000) {
+      return `₹${(numPrice / 10000000).toFixed(2)} Cr`;
+    }
+    if (numPrice >= 100000) {
+      return `₹${(numPrice / 100000).toFixed(2)} Lakhs`;
+    }
+    return `₹${numPrice.toLocaleString('en-IN')}`;
   };
 
-  const imageUrl = !imageError && property.images && property.images[0] 
-    ? property.images[0] 
-    : getDefaultImage(property.type);
+  const imageUrl = !imageError && property.images && property.images[0]
+    ? property.images[0]
+    : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=500';
 
-  const cardStyle = {
-    background: '#fff',
-    borderRadius: '10px',
-    overflow: 'hidden',
-    boxShadow: isHovered ? '0 5px 20px rgba(0,0,0,0.15)' : '0 2px 10px rgba(0,0,0,0.1)',
-    transition: 'all 0.3s ease',
-    cursor: 'pointer'
+  const getPurposeStyle = (purpose) => {
+    if (purpose === 'sale') {
+      return { background: '#28a745', color: '#fff' };
+    }
+    return { background: '#f9b234', color: '#1e3c72' };
   };
 
-  const mediaStyle = {
-    position: 'relative',
-    height: '200px',
-    overflow: 'hidden',
-    background: '#f0f0f0' // Fallback color
-  };
+  const purposeText = property.purpose === 'sale' ? 'For Sale' : 'For Rent';
 
-  const imageStyle = {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-    transition: 'transform 0.3s ease'
-  };
-
-  const idStyle = {
-    position: 'absolute',
-    top: '10px',
-    left: '10px',
-    background: 'rgba(0,0,0,0.7)',
-    color: '#fff',
-    padding: '4px 8px',
-    borderRadius: '4px',
-    fontSize: '12px',
-    zIndex: 1
-  };
-
-  const videoIconStyle = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    background: 'rgba(255,255,255,0.9)',
-    width: '50px',
-    height: '50px',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#1e3c72',
-    fontSize: '20px',
-    border: 'none',
-    cursor: 'pointer',
-    zIndex: 1
-  };
-
-  const infoStyle = {
-    padding: '20px'
-  };
-
-  const titleStyle = {
-    fontSize: '18px',
-    marginBottom: '10px',
-    color: '#333'
-  };
-
-  const locationStyle = {
-    color: '#666',
-    marginBottom: '10px',
-    fontSize: '14px'
-  };
-
-  const detailsStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    marginBottom: '15px',
-    padding: '10px 0',
-    borderTop: '1px solid #eee',
-    borderBottom: '1px solid #eee'
-  };
-
-  const priceStyle = {
-    color: '#1e3c72',
-    fontWeight: 'bold',
-    fontSize: '16px'
-  };
-
-  const sizeStyle = {
-    color: '#666',
-    fontSize: '14px'
-  };
-
-  const typeStyle = {
-    background: '#f0f0f0',
-    padding: '4px 8px',
-    borderRadius: '4px',
-    fontSize: '12px'
-  };
-
-  const buttonStyle = {
-    width: '100%',
-    padding: '12px',
-    background: 'linear-gradient(135deg, #1e3c72, #2a5298)',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '5px',
-    fontSize: '16px',
-    fontWeight: 600,
-    cursor: 'pointer',
-    transition: 'transform 0.3s ease'
-  };
-
-  const handleGetContact = () => {
-    setShowContactPopup(true);
+  // Footer Colors
+  const colors = {
+    dark: '#0a2a3a',
+    accent: '#f9b234',
+    light: '#f8f9fa',
+    white: '#ffffff',
+    gray: '#6c757d',
+    success: '#28a745'
   };
 
   return (
     <>
-      <div 
-        style={cardStyle}
+      <div
+        style={{
+          background: colors.white,
+          borderRadius: '16px',
+          overflow: 'hidden',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          boxShadow: isHovered ? '0 20px 40px rgba(0,0,0,0.15)' : '0 5px 15px rgba(0,0,0,0.08)',
+          transform: isHovered ? 'translateY(-8px)' : 'translateY(0)',
+          cursor: 'pointer'
+        }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <div style={mediaStyle}>
-          <img 
+        {/* Image Section */}
+        <div style={{ position: 'relative', overflow: 'hidden', height: '220px' }}>
+          <img
             src={imageUrl}
             alt={property.title}
             style={{
-              ...imageStyle,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transition: 'transform 0.5s ease',
               transform: isHovered ? 'scale(1.1)' : 'scale(1)'
             }}
             onError={() => setImageError(true)}
           />
-          <span style={idStyle}>ID: {property.id}</span>
-          {property.video && (
-            <button style={videoIconStyle}>
-              <i className="fas fa-play"></i>
+          
+          <div style={{
+            position: 'absolute',
+            top: '15px',
+            left: '15px',
+            display: 'flex',
+            gap: '8px',
+            flexWrap: 'wrap'
+          }}>
+            <span style={{
+              ...getPurposeStyle(property.purpose),
+              padding: '5px 12px',
+              borderRadius: '20px',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+            }}>
+              {purposeText}
+            </span>
+            <span style={{
+              background: 'rgba(0,0,0,0.7)',
+              color: '#fff',
+              padding: '5px 12px',
+              borderRadius: '20px',
+              fontSize: '11px',
+              fontWeight: '500'
+            }}>
+              ID: {property.id}
+            </span>
+          </div>
+          
+          <div style={{
+            position: 'absolute',
+            top: '15px',
+            right: '15px',
+            display: 'flex',
+            gap: '8px'
+          }}>
+            <button
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                background: '#fff',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#ff4757';
+                e.currentTarget.style.transform = 'scale(1.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#fff';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              <FaHeart size={14} style={{ color: '#666' }} />
             </button>
-          )}
+          </div>
         </div>
-        
-        <div style={infoStyle}>
-          <h3 style={titleStyle}>{property.title}</h3>
+
+        {/* Content Section */}
+        <div style={{ padding: '20px' }}>
+          <h3 style={{
+            fontSize: '18px',
+            fontWeight: '700',
+            color: colors.dark,
+            marginBottom: '10px',
+            lineHeight: '1.4'
+          }}>
+            {property.title}
+          </h3>
           
-          <div style={locationStyle}>
-            <i className="fas fa-map-marker-alt" style={{marginRight: '5px', color: '#f9b234'}}></i>
-            {property.location}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '15px' }}>
+            <FaMapMarkerAlt size={12} style={{ color: colors.accent }} />
+            <span style={{ color: colors.gray, fontSize: '13px' }}>{property.location}</span>
           </div>
           
-          <div style={detailsStyle}>
-            <span style={priceStyle}>{property.price}</span>
-            <span style={sizeStyle}>{property.size}</span>
-            <span style={typeStyle}>{property.type}</span>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            padding: '12px 0',
+            borderTop: '1px solid #eee',
+            borderBottom: '1px solid #eee',
+            marginBottom: '15px',
+            flexWrap: 'wrap',
+            gap: '10px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: colors.light, padding: '5px 10px', borderRadius: '8px' }}>
+              <FaBed size={14} style={{ color: colors.dark }} />
+              <span style={{ fontSize: '13px', fontWeight: '500', color: '#333' }}>{property.bedrooms || 3} Beds</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: colors.light, padding: '5px 10px', borderRadius: '8px' }}>
+              <FaBath size={14} style={{ color: colors.dark }} />
+              <span style={{ fontSize: '13px', fontWeight: '500', color: '#333' }}>{property.bathrooms || 2} Baths</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: colors.light, padding: '5px 10px', borderRadius: '8px' }}>
+              <FaVectorSquare size={14} style={{ color: colors.dark }} />
+              <span style={{ fontSize: '13px', fontWeight: '500', color: '#333' }}>{property.size}</span>
+            </div>
           </div>
           
-          <button 
-            style={buttonStyle}
-            onClick={handleGetContact}
-            onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
-            onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
-          >
-            Get Contact
-          </button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <div>
+              <span style={{ fontSize: '20px', fontWeight: '800', color: colors.accent, letterSpacing: '-0.5px' }}>
+                {formatPrice(property.price)}
+              </span>
+              {property.purpose === 'rent' && <span style={{ fontSize: '12px', color: colors.gray, marginLeft: '2px' }}>/month</span>}
+            </div>
+            
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowContactPopup(true);
+                }}
+                style={{
+                  background: colors.dark,
+                  color: '#fff',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '10px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = colors.accent;
+                  e.currentTarget.style.color = colors.dark;
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = colors.dark;
+                  e.currentTarget.style.color = '#fff';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                <FaPhone size={12} /> Contact
+              </button>
+              
+              <Link
+                to={`/property/${property.id}`}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  background: 'transparent',
+                  border: `2px solid ${colors.dark}`,
+                  color: colors.dark,
+                  padding: '6px 16px',
+                  borderRadius: '10px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  textDecoration: 'none',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = colors.dark;
+                  e.currentTarget.style.color = '#fff';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = colors.dark;
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                Details
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
 
       {showContactPopup && (
-        <ContactPopup 
+        <ContactPopup
           propertyId={property.id}
           onClose={() => setShowContactPopup(false)}
         />

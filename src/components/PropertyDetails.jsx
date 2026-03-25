@@ -1,298 +1,586 @@
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import ContactPopup from './ContactPopup';
+import React, { useState, useEffect } from 'react'
+import { useParams, Link } from 'react-router-dom'
+import { FaMapMarkerAlt, FaBed, FaBath, FaVectorSquare, FaPhone, FaEnvelope, FaCheck, FaArrowLeft, FaHeart, FaShare, FaImages, FaVideo, FaChevronLeft, FaChevronRight, FaWhatsapp, FaCalendarAlt, FaUser, FaClock, FaBuilding, FaRulerCombined, FaParking, FaSwimmingPool, FaShieldAlt, FaWifi, FaSnowflake, FaCouch, FaUtensils, FaStar, FaHome } from 'react-icons/fa'
+import { getProperty } from '../services/api'
+import ContactPopup from './ContactPopup'
 
 const PropertyDetails = () => {
-  const { id } = useParams();
-  const [showContactPopup, setShowContactPopup] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(0);
-  
-  const [property] = useState({
-    id: id || 'RE1001',
-    title: 'Luxury Villa with Pool',
-    price: '₹1.25 Cr',
-    location: 'Golf Course Road, Gurugram',
-    size: '3500 sq.ft',
-    type: 'House',
-    bedrooms: 4,
-    bathrooms: 5,
-    description: 'This stunning luxury villa offers premium living with modern amenities. Features include a private pool, garden, and modern interiors. Located in the most prestigious area of Gurugram with 24/7 security and club house access.',
-    images: [
-      'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=800',
-      'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800',
-      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800',
-      'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800',
-      'https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=400',
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400'
-    ],
-    video: 'https://example.com/video.mp4',
-    features: ['Swimming Pool', 'Garden', 'Parking', 'Security', 'Gym', 'Club House', 'Power Backup', 'Lift']
-  });
+  const { id } = useParams()
+  const [property, setProperty] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [showContactPopup, setShowContactPopup] = useState(false)
+  const [selectedImage, setSelectedImage] = useState(0)
+  const [selectedVideo, setSelectedVideo] = useState(null)
+  const [showVideoModal, setShowVideoModal] = useState(false)
+  const [isLiked, setIsLiked] = useState(false)
 
-  const containerStyle = {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '40px 20px'
-  };
+  useEffect(() => {
+    loadProperty()
+    window.scrollTo(0, 0)
+  }, [id])
 
-  const galleryStyle = {
-    display: 'grid',
-    gridTemplateColumns: '2fr 1fr',
-    gap: '20px',
-    marginBottom: '30px'
-  };
+  const loadProperty = async () => {
+    try {
+      const response = await getProperty(id)
+      setProperty(response.data.data)
+    } catch (error) {
+      console.error('Error:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const mainImageStyle = {
-    width: '100%',
-    height: '400px',
-    objectFit: 'cover',
-    borderRadius: '10px',
-    cursor: 'pointer',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-  };
+  const formatPrice = (price) => {
+    if (!price) return 'Price on Request'
+    
+    let cleanPrice = price.toString().replace(/[₹,]/g, '').trim()
+    
+    if (cleanPrice.toLowerCase().includes('lakh')) {
+      return `₹${cleanPrice}`
+    }
+    if (cleanPrice.toLowerCase().includes('cr')) {
+      return `₹${cleanPrice}`
+    }
+    
+    const numPrice = parseFloat(cleanPrice)
+    if (isNaN(numPrice)) return `₹${price}`
+    
+    if (numPrice >= 10000000) {
+      return `₹${(numPrice / 10000000).toFixed(2)} Cr`
+    }
+    if (numPrice >= 100000) {
+      return `₹${(numPrice / 100000).toFixed(2)} Lakhs`
+    }
+    return `₹${numPrice.toLocaleString('en-IN')}`
+  }
 
-  const thumbnailGridStyle = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '10px'
-  };
+  const nextImage = () => {
+    if (property?.images) {
+      setSelectedImage((prev) => (prev + 1) % property.images.length)
+    }
+  }
 
-  const thumbnailStyle = {
-    width: '100%',
-    height: '195px',
-    objectFit: 'cover',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    opacity: 0.7,
-    transition: 'opacity 0.3s ease',
-    border: '2px solid transparent'
-  };
+  const prevImage = () => {
+    if (property?.images) {
+      setSelectedImage((prev) => (prev - 1 + property.images.length) % property.images.length)
+    }
+  }
 
-  const thumbnailActiveStyle = {
-    ...thumbnailStyle,
-    opacity: 1,
-    border: '2px solid #1e3c72'
-  };
+  const features = [
+    { icon: FaSwimmingPool, name: 'Swimming Pool', available: true },
+    { icon: FaParking, name: 'Car Parking', available: true },
+    { icon: FaShieldAlt, name: '24/7 Security', available: true },
+    { icon: FaWifi, name: 'High Speed WiFi', available: true },
+    { icon: FaSnowflake, name: 'Air Conditioning', available: true },
+    { icon: FaCouch, name: 'Furnished', available: true },
+    { icon: FaUtensils, name: 'Modular Kitchen', available: true },
+    { icon: FaBuilding, name: 'Lift', available: true }
+  ]
 
-  const infoSectionStyle = {
-    display: 'grid',
-    gridTemplateColumns: '2fr 1fr',
-    gap: '30px'
-  };
+  const colors = {
+    dark: '#0a2a3a',
+    accent: '#f9b234',
+    light: '#f8f9fa',
+    white: '#ffffff',
+    gray: '#6c757d',
+    success: '#28a745'
+  }
 
-  const detailsStyle = {
-    background: '#fff',
-    padding: '30px',
-    borderRadius: '10px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-  };
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <div className="spinner"></div>
+      </div>
+    )
+  }
 
-  const titleStyle = {
-    fontSize: '28px',
-    color: '#1e3c72',
-    marginBottom: '10px'
-  };
+  if (!property) {
+    return (
+      <div style={{ textAlign: 'center', padding: '100px' }}>
+        <h2 style={{ color: colors.dark }}>Property not found</h2>
+        <Link to="/" style={{ color: colors.accent, textDecoration: 'none', marginTop: '20px', display: 'inline-block' }}>
+          Back to Home
+        </Link>
+      </div>
+    )
+  }
 
-  const priceStyle = {
-    fontSize: '24px',
-    color: '#f9b234',
-    fontWeight: 'bold',
-    marginBottom: '15px'
-  };
+  const images = property.images || [
+    'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800',
+    'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800',
+    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800',
+    'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800',
+    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800',
+    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800'
+  ]
 
-  const locationStyle = {
-    color: '#666',
-    marginBottom: '20px',
-    fontSize: '16px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '5px'
-  };
-
-  const specsStyle = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: '15px',
-    padding: '20px 0',
-    borderTop: '1px solid #eee',
-    borderBottom: '1px solid #eee',
-    marginBottom: '20px'
-  };
-
-  const specItemStyle = {
-    textAlign: 'center'
-  };
-
-  const specValueStyle = {
-    fontSize: '18px',
-    fontWeight: 'bold',
-    color: '#1e3c72'
-  };
-
-  const specLabelStyle = {
-    fontSize: '14px',
-    color: '#666'
-  };
-
-  const descriptionStyle = {
-    marginBottom: '20px',
-    lineHeight: '1.8',
-    color: '#666'
-  };
-
-  const featuresStyle = {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '10px',
-    marginTop: '20px'
-  };
-
-  const featureStyle = {
-    background: '#f0f0f0',
-    padding: '8px 16px',
-    borderRadius: '20px',
-    fontSize: '14px',
-    color: '#333',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '5px'
-  };
-
-  const sidebarStyle = {
-    background: '#fff',
-    padding: '30px',
-    borderRadius: '10px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-    height: 'fit-content'
-  };
-
-  const agentImageStyle = {
-    width: '80px',
-    height: '80px',
-    borderRadius: '50%',
-    objectFit: 'cover',
-    marginBottom: '15px'
-  };
-
-  const contactBtnStyle = {
-    width: '100%',
-    padding: '15px',
-    background: 'linear-gradient(135deg, #1e3c72, #2a5298)',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '5px',
-    fontSize: '18px',
-    fontWeight: 600,
-    cursor: 'pointer',
-    marginBottom: '15px',
-    transition: 'transform 0.3s ease'
-  };
+  const videos = property.videos || [
+    'https://www.w3schools.com/html/mov_bbb.mp4'
+  ]
 
   return (
-    <div style={containerStyle}>
-      {/* Image Gallery */}
-      <div style={galleryStyle}>
-        <img 
-          src={property.images[selectedImage]} 
-          alt="Main" 
-          style={mainImageStyle}
-          onClick={() => window.open(property.images[selectedImage], '_blank')}
-        />
-        <div style={thumbnailGridStyle}>
-          {property.images.slice(0, 4).map((img, index) => (
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
+      {/* Back Button */}
+      <Link to="/" style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '8px',
+        color: colors.dark,
+        textDecoration: 'none',
+        marginBottom: '30px',
+        padding: '10px 20px',
+        background: colors.light,
+        borderRadius: '50px',
+        transition: 'all 0.3s ease',
+        fontSize: '14px'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = colors.accent
+        e.currentTarget.style.color = colors.dark
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = colors.light
+        e.currentTarget.style.color = colors.dark
+      }}>
+        <FaArrowLeft /> Back to Home
+      </Link>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
+        {/* Left Column - Images & Videos */}
+        <div>
+          {/* Main Image */}
+          <div style={{ position: 'relative' }}>
             <img
-              key={index}
-              src={img}
-              alt={`Thumbnail ${index + 1}`}
-              style={selectedImage === index ? thumbnailActiveStyle : thumbnailStyle}
-              onClick={() => setSelectedImage(index)}
-              onMouseEnter={(e) => !selectedImage === index && (e.target.style.opacity = 1)}
-              onMouseLeave={(e) => !selectedImage === index && (e.target.style.opacity = 0.7)}
+              src={images[selectedImage]}
+              alt={property.title}
+              style={{
+                width: '100%',
+                height: '450px',
+                objectFit: 'cover',
+                borderRadius: '20px',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
+              }}
             />
-          ))}
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={prevImage}
+                  style={{
+                    position: 'absolute',
+                    left: '15px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'rgba(0,0,0,0.5)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: '#fff',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = colors.accent}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.5)'}
+                >
+                  <FaChevronLeft />
+                </button>
+                <button
+                  onClick={nextImage}
+                  style={{
+                    position: 'absolute',
+                    right: '15px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'rgba(0,0,0,0.5)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: '#fff'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = colors.accent}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.5)'}
+                >
+                  <FaChevronRight />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Thumbnail Grid - 6 Photos */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '10px', marginTop: '15px' }}>
+            {images.slice(0, 6).map((img, idx) => (
+              <div
+                key={idx}
+                onClick={() => setSelectedImage(idx)}
+                style={{
+                  cursor: 'pointer',
+                  border: selectedImage === idx ? `3px solid ${colors.accent}` : '2px solid transparent',
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <img
+                  src={img}
+                  alt={`Thumb ${idx + 1}`}
+                  style={{
+                    width: '100%',
+                    height: '80px',
+                    objectFit: 'cover'
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Videos Section - 2 Videos */}
+          {videos.length > 0 && (
+            <div style={{ marginTop: '30px' }}>
+              <h3 style={{ color: colors.dark, marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '18px' }}>
+                <FaVideo style={{ color: colors.accent }} /> Property Videos
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
+                {videos.slice(0, 2).map((video, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      setSelectedVideo(video)
+                      setShowVideoModal(true)
+                    }}
+                    style={{
+                      position: 'relative',
+                      cursor: 'pointer',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      aspectRatio: '16/9',
+                      background: colors.dark
+                    }}
+                  >
+                    <video
+                      src={video}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        opacity: 0.7
+                      }}
+                    />
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      background: 'rgba(0,0,0,0.6)',
+                      width: '50px',
+                      height: '50px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: colors.accent,
+                      fontSize: '24px'
+                    }}>
+                      ▶
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column - Property Info */}
+        <div>
+          {/* Title & Actions */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '20px' }}>
+            <h1 style={{ fontSize: '28px', fontWeight: '700', color: colors.dark, margin: 0, lineHeight: '1.3' }}>{property.title}</h1>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => setIsLiked(!isLiked)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '20px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              >
+                <FaHeart style={{ color: isLiked ? '#ff4757' : colors.gray }} />
+              </button>
+              <button
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '18px',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              >
+                <FaShare style={{ color: colors.gray }} />
+              </button>
+            </div>
+          </div>
+
+          {/* Location & Purpose */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <FaMapMarkerAlt style={{ color: colors.accent }} />
+              <span style={{ color: colors.gray }}>{property.location}</span>
+            </div>
+            <span style={{
+              background: property.purpose === 'sale' ? colors.success : colors.accent,
+              color: property.purpose === 'sale' ? '#fff' : colors.dark,
+              padding: '5px 15px',
+              borderRadius: '20px',
+              fontSize: '12px',
+              fontWeight: 'bold'
+            }}>
+              {property.purpose === 'sale' ? 'For Sale' : 'For Rent'}
+            </span>
+            <span style={{
+              background: colors.light,
+              color: colors.gray,
+              padding: '5px 12px',
+              borderRadius: '20px',
+              fontSize: '12px'
+            }}>
+              ID: {property.id}
+            </span>
+          </div>
+
+          {/* Price */}
+          <div style={{ marginBottom: '25px' }}>
+            <span style={{ fontSize: '32px', fontWeight: '800', color: colors.accent }}>
+              {formatPrice(property.price)}
+            </span>
+            {property.purpose === 'rent' && <span style={{ fontSize: '14px', color: colors.gray }}>/month</span>}
+          </div>
+
+          {/* Key Specs */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '15px',
+            padding: '20px',
+            background: colors.light,
+            borderRadius: '16px',
+            marginBottom: '25px'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <FaBed size={22} style={{ color: colors.accent, marginBottom: '8px' }} />
+              <div><strong>{property.bedrooms || 3}</strong> Bedrooms</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <FaBath size={22} style={{ color: colors.accent, marginBottom: '8px' }} />
+              <div><strong>{property.bathrooms || 2}</strong> Bathrooms</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <FaVectorSquare size={22} style={{ color: colors.accent, marginBottom: '8px' }} />
+              <div><strong>{property.size}</strong></div>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div style={{ marginBottom: '25px' }}>
+            <h3 style={{ marginBottom: '12px', color: colors.dark, fontSize: '18px', fontWeight: '600' }}>Description</h3>
+            <p style={{ color: colors.gray, lineHeight: '1.7', fontSize: '14px' }}>
+              {property.description || 'This beautiful property offers modern amenities and prime location. Perfect for families seeking comfort and convenience. Located in a peaceful neighborhood with easy access to schools, hospitals, and shopping centers.'}
+            </p>
+          </div>
+
+          {/* Features */}
+          <div style={{ marginBottom: '25px' }}>
+            <h3 style={{ marginBottom: '15px', color: colors.dark, fontSize: '18px', fontWeight: '600' }}>Key Features</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+              {features.map((feature, idx) => {
+                const Icon = feature.icon
+                return (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <FaCheck style={{ color: colors.success, fontSize: '11px' }} />
+                    <Icon size={13} style={{ color: colors.dark }} />
+                    <span style={{ fontSize: '13px', color: colors.gray }}>{feature.name}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Contact Buttons */}
+          <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
+            <button
+              onClick={() => setShowContactPopup(true)}
+              style={{
+                flex: 1,
+                background: colors.accent,
+                color: colors.dark,
+                border: 'none',
+                padding: '12px',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)'
+                e.currentTarget.style.boxShadow = '0 5px 15px rgba(249,178,52,0.3)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = 'none'
+              }}
+            >
+              <FaPhone /> Contact Agent
+            </button>
+            <button
+              style={{
+                flex: 1,
+                background: colors.dark,
+                color: '#fff',
+                border: 'none',
+                padding: '12px',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)'
+                e.currentTarget.style.boxShadow = '0 5px 15px rgba(10,42,58,0.3)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = 'none'
+              }}
+            >
+              <FaWhatsapp /> WhatsApp
+            </button>
+          </div>
+
+          {/* Additional Info */}
+          <div style={{ padding: '15px', background: colors.light, borderRadius: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <span style={{ fontSize: '12px', color: colors.gray }}>Property ID</span>
+              <span style={{ fontSize: '12px', fontWeight: '500', color: colors.dark }}>{property.id}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <span style={{ fontSize: '12px', color: colors.gray }}>Posted on</span>
+              <span style={{ fontSize: '12px', fontWeight: '500', color: colors.dark }}>{new Date(property.created_at).toLocaleDateString()}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '12px', color: colors.gray }}>Total Views</span>
+              <span style={{ fontSize: '12px', fontWeight: '500', color: colors.dark }}>{property.views || 0} views</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Property Info */}
-      <div style={infoSectionStyle}>
-        <div style={detailsStyle}>
-          <h1 style={titleStyle}>{property.title}</h1>
-          <div style={priceStyle}>{property.price}</div>
-          <div style={locationStyle}>
-            <i className="fas fa-map-marker-alt" style={{color: '#f9b234'}}></i>
-            {property.location}
-          </div>
-
-          <div style={specsStyle}>
-            <div style={specItemStyle}>
-              <div style={specValueStyle}>{property.size}</div>
-              <div style={specLabelStyle}>Size</div>
-            </div>
-            <div style={specItemStyle}>
-              <div style={specValueStyle}>{property.bedrooms}</div>
-              <div style={specLabelStyle}>Bedrooms</div>
-            </div>
-            <div style={specItemStyle}>
-              <div style={specValueStyle}>{property.bathrooms}</div>
-              <div style={specLabelStyle}>Bathrooms</div>
-            </div>
-          </div>
-
-          <div style={descriptionStyle}>
-            <h3 style={{marginBottom: '10px', color: '#1e3c72'}}>Description</h3>
-            <p>{property.description}</p>
-          </div>
-
-          <div>
-            <h3 style={{marginBottom: '15px', color: '#1e3c72'}}>Amenities & Features</h3>
-            <div style={featuresStyle}>
-              {property.features.map((feature, index) => (
-                <span key={index} style={featureStyle}>
-                  <i className="fas fa-check" style={{color: '#28a745'}}></i>
-                  {feature}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Sidebar */}
-        <div style={sidebarStyle}>
-          <div style={{textAlign: 'center', marginBottom: '20px'}}>
-            <img 
-              src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200" 
-              alt="Agent"
-              style={agentImageStyle}
+      {/* Video Modal */}
+      {showVideoModal && selectedVideo && (
+        <div
+          onClick={() => setShowVideoModal(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.9)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer'
+          }}
+        >
+          <div style={{ maxWidth: '90%', maxHeight: '90%' }} onClick={(e) => e.stopPropagation()}>
+            <video
+              src={selectedVideo}
+              controls
+              autoPlay
+              style={{
+                width: '100%',
+                height: '100%',
+                maxHeight: '80vh',
+                borderRadius: '12px'
+              }}
             />
-            <h3 style={{color: '#1e3c72', marginBottom: '5px'}}>Rajesh Kumar</h3>
-            <p style={{color: '#666', fontSize: '14px'}}>Senior Property Consultant</p>
-          </div>
-          
-          <button 
-            style={contactBtnStyle}
-            onClick={() => setShowContactPopup(true)}
-            onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
-            onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
-          >
-            <i className="fas fa-phone-alt" style={{marginRight: '10px'}}></i>
-            Get Contact Details
-          </button>
-
-          <div style={{textAlign: 'center', padding: '20px 0', borderTop: '1px solid #eee'}}>
-            <div style={{fontWeight: 'bold', marginBottom: '5px'}}>Property ID: {property.id}</div>
-            <div style={{color: '#666', fontSize: '14px'}}>Posted: Today</div>
+            <button
+              onClick={() => setShowVideoModal(false)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: '#fff',
+                border: 'none',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                fontSize: '20px',
+                cursor: 'pointer'
+              }}
+            >
+              ✕
+            </button>
           </div>
         </div>
-      </div>
+      )}
 
       {showContactPopup && (
-        <ContactPopup 
+        <ContactPopup
           propertyId={property.id}
           onClose={() => setShowContactPopup(false)}
         />
       )}
-    </div>
-  );
-};
 
-export default PropertyDetails;
+      <style>{`
+        .spinner {
+          width: 40px;
+          height: 40px;
+          border: 3px solid rgba(10,42,58,0.1);
+          border-top-color: #f9b234;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+          .property-details-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .thumbnail-grid {
+            grid-templateColumns: repeat(4, 1fr) !important;
+          }
+          .video-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+export default PropertyDetails

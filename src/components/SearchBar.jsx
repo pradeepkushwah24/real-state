@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FaSearch } from 'react-icons/fa';
 
 const SearchBar = () => {
   const [searchParams, setSearchParams] = useState({
@@ -7,47 +9,7 @@ const SearchBar = () => {
     budget: '',
     size: ''
   });
-
-  const formStyle = {
-    background: 'rgba(255,255,255,0.95)',
-    padding: '30px',
-    borderRadius: '10px',
-    maxWidth: '900px',
-    margin: '0 auto'
-  };
-
-  const gridStyle = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '15px',
-    alignItems: 'end'
-  };
-
-  const inputStyle = {
-    width: '100%',
-    padding: '12px',
-    border: '1px solid #ddd',
-    borderRadius: '5px',
-    fontSize: '16px'
-  };
-
-  const selectStyle = {
-    ...inputStyle,
-    background: '#fff'
-  };
-
-  const buttonStyle = {
-    width: '100%',
-    padding: '12px',
-    background: 'linear-gradient(135deg, #1e3c72, #2a5298)',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '5px',
-    fontSize: '16px',
-    fontWeight: 600,
-    cursor: 'pointer',
-    transition: 'transform 0.3s ease'
-  };
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setSearchParams({
@@ -58,52 +20,135 @@ const SearchBar = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    window.location.href = `/search?${new URLSearchParams(searchParams)}`;
+    const params = new URLSearchParams();
+    Object.keys(searchParams).forEach(key => {
+      if (searchParams[key]) params.append(key, searchParams[key]);
+    });
+    navigate(`/search?${params.toString()}`);
   };
 
   return (
-    <form style={formStyle} onSubmit={handleSearch}>
-      <div style={gridStyle}>
+    <form onSubmit={handleSearch} style={{
+      background: 'rgba(255,255,255,0.95)',
+      padding: '25px',
+      borderRadius: '15px',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+    }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+        gap: '15px',
+        '@media (maxWidth: 768px)': {
+          gridTemplateColumns: '1fr',
+          gap: '12px'
+        }
+      }}>
         <input
           type="text"
           name="location"
-          placeholder="Location"
-          style={inputStyle}
+          placeholder="📍 Location (City, Area)"
+          style={{
+            padding: '14px',
+            border: '1px solid #ddd',
+            borderRadius: '10px',
+            fontSize: '14px',
+            outline: 'none',
+            transition: 'all 0.3s ease'
+          }}
           value={searchParams.location}
           onChange={handleChange}
+          onFocus={(e) => e.target.style.borderColor = '#f9b234'}
+          onBlur={(e) => e.target.style.borderColor = '#ddd'}
         />
         
-        <select name="type" style={selectStyle} value={searchParams.type} onChange={handleChange}>
-          <option value="">Property Type</option>
-          <option value="house">House</option>
-          <option value="flat">Flat/Apartment</option>
-          <option value="plot">Plot/Land</option>
-          <option value="commercial">Commercial</option>
-        </select>
-        
-        <select name="budget" style={selectStyle} value={searchParams.budget} onChange={handleChange}>
-          <option value="">Budget</option>
-          <option value="0-25l">Below 25 Lakhs</option>
-          <option value="25l-50l">25-50 Lakhs</option>
-          <option value="50l-1cr">50 Lakhs - 1 Cr</option>
-          <option value="1cr+">Above 1 Cr</option>
-        </select>
-        
-        <select name="size" style={selectStyle} value={searchParams.size} onChange={handleChange}>
-          <option value="">Size (sq.ft)</option>
-          <option value="0-1000">Below 1000</option>
-          <option value="1000-2000">1000-2000</option>
-          <option value="2000-3000">2000-3000</option>
-          <option value="3000+">Above 3000</option>
-        </select>
-        
-        <button 
-          type="submit" 
-          style={buttonStyle}
-          onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
-          onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+        <select
+          name="type"
+          style={{
+            padding: '14px',
+            border: '1px solid #ddd',
+            borderRadius: '10px',
+            fontSize: '14px',
+            background: '#fff',
+            cursor: 'pointer'
+          }}
+          value={searchParams.type}
+          onChange={handleChange}
         >
-          Search
+          <option value="">🏠 Property Type</option>
+          <option value="house">House / Villa</option>
+          <option value="apartment">Apartment / Flat</option>
+          <option value="plot">Plot / Land</option>
+          <option value="commercial">Commercial / Shop</option>
+        </select>
+        
+        <select
+          name="budget"
+          style={{
+            padding: '14px',
+            border: '1px solid #ddd',
+            borderRadius: '10px',
+            fontSize: '14px',
+            background: '#fff',
+            cursor: 'pointer'
+          }}
+          value={searchParams.budget}
+          onChange={handleChange}
+        >
+          <option value="">💰 Budget Range</option>
+          <option value="0-25l">Below ₹25 Lakhs</option>
+          <option value="25l-50l">₹25 - 50 Lakhs</option>
+          <option value="50l-1cr">₹50 Lakhs - 1 Cr</option>
+          <option value="1cr-2cr">₹1 Cr - 2 Cr</option>
+          <option value="2cr+">Above ₹2 Cr</option>
+        </select>
+        
+        <select
+          name="size"
+          style={{
+            padding: '14px',
+            border: '1px solid #ddd',
+            borderRadius: '10px',
+            fontSize: '14px',
+            background: '#fff',
+            cursor: 'pointer'
+          }}
+          value={searchParams.size}
+          onChange={handleChange}
+        >
+          <option value="">📏 Area (sq.ft)</option>
+          <option value="0-1000">Below 1000 sq.ft</option>
+          <option value="1000-2000">1000 - 2000 sq.ft</option>
+          <option value="2000-3000">2000 - 3000 sq.ft</option>
+          <option value="3000+">Above 3000 sq.ft</option>
+        </select>
+        
+        <button
+          type="submit"
+          style={{
+            background: 'linear-gradient(135deg, #f9b234, #f5af19)',
+            border: 'none',
+            borderRadius: '10px',
+            padding: '14px',
+            fontWeight: '600',
+            fontSize: '16px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            color: '#1e3c72',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 5px 15px rgba(249,178,52,0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+        >
+          <FaSearch /> Search
         </button>
       </div>
     </form>
